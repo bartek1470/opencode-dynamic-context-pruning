@@ -1,9 +1,8 @@
 import { SessionState, WithParts } from "./state"
 import { AssistantMessage, UserMessage } from "@opencode-ai/sdk/v2"
 import { Logger } from "./logger"
-import * as _anthropicTokenizer from "@anthropic-ai/tokenizer"
-const anthropicCountTokens = (_anthropicTokenizer.countTokens ??
-    (_anthropicTokenizer as any).default?.countTokens) as typeof _anthropicTokenizer.countTokens
+import { countTokens } from "./core/tokens"
+export { countTokens } from "./core/tokens"
 import { getLastUserMessage } from "./messages/query"
 
 export function getCurrentTokenUsage(state: SessionState, messages: WithParts[]): number {
@@ -64,15 +63,6 @@ export function getCurrentParams(
     const variant: string | undefined = userInfo.model.variant
 
     return { providerId, modelId, agent, variant }
-}
-
-export function countTokens(text: string): number {
-    if (!text) return 0
-    try {
-        return anthropicCountTokens(text)
-    } catch {
-        return Math.round(text.length / 4)
-    }
 }
 
 export function estimateTokensBatch(texts: string[]): number {

@@ -16,7 +16,7 @@ jobs:
             - name: Setup Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: "20"
+                  node-version: "22"
                   cache: "npm"
 
             - name: Install dependencies
@@ -28,8 +28,17 @@ jobs:
             - name: Type check
               run: npm run typecheck
 
+            - name: Install isolated V2 contract dependencies
+              run: npm ci --prefix tests/v2-contracts --omit=optional
+
+            - name: Check published V2 contracts
+              run: npm run typecheck:v2
+
+            - name: Test both host adapters
+              run: npm test
+
             - name: Build
-              run: npm run build
+              run: npm run check:package
 
             - name: Security audit
               run: npm audit --audit-level=high

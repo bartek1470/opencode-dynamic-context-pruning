@@ -7,6 +7,7 @@ import {
     isToolNameProtected,
 } from "../protected-patterns"
 import { getTotalToolTokens } from "../token-utils"
+import { createToolSignature } from "../core/tool-signature"
 
 /**
  * Deduplication strategy - prunes older tool calls that have identical
@@ -91,37 +92,4 @@ export const deduplicate = (
         }
         logger.debug(`Marked ${newPruneIds.length} duplicate tool calls for pruning`)
     }
-}
-
-function createToolSignature(tool: string, parameters?: any): string {
-    if (!parameters) {
-        return tool
-    }
-    const normalized = normalizeParameters(parameters)
-    const sorted = sortObjectKeys(normalized)
-    return `${tool}::${JSON.stringify(sorted)}`
-}
-
-function normalizeParameters(params: any): any {
-    if (typeof params !== "object" || params === null) return params
-    if (Array.isArray(params)) return params
-
-    const normalized: any = {}
-    for (const [key, value] of Object.entries(params)) {
-        if (value !== undefined && value !== null) {
-            normalized[key] = value
-        }
-    }
-    return normalized
-}
-
-function sortObjectKeys(obj: any): any {
-    if (typeof obj !== "object" || obj === null) return obj
-    if (Array.isArray(obj)) return obj.map(sortObjectKeys)
-
-    const sorted: any = {}
-    for (const key of Object.keys(obj).sort()) {
-        sorted[key] = sortObjectKeys(obj[key])
-    }
-    return sorted
 }

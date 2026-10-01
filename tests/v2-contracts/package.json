@@ -1,0 +1,11 @@
+{
+    "name": "dcp-v2-contract-checks",
+    "private": true,
+    "type": "module",
+    "devDependencies": {
+        "@opencode/plugin": "2.0.19"
+    },
+    "scripts": {
+        "typecheck": "tsc --noEmit -p tsconfig.json"
+    }
+}

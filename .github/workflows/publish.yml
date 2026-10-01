@@ -62,6 +62,12 @@ jobs:
               if: steps.package.outputs.published == 'false'
               run: npm test
 
+            - name: Validate published V2 contracts
+              if: steps.package.outputs.published == 'false'
+              run: |
+                  npm ci --prefix tests/v2-contracts --omit=optional
+                  npm run typecheck:v2
+
             - name: Publish
               if: steps.package.outputs.published == 'false'
               run: npx --yes --package npm@11 npm publish --access public --provenance

@@ -9,13 +9,37 @@ Automatically reduces token usage in OpenCode by managing conversation context.
 
 ## Installation
 
-Install from the CLI:
+This fork targets **OpenCode V1 1.18.29+ and restricted V2 support**. V1 keeps the
+existing compression tool and UI. V2 currently provides conservative automatic
+pruning, inspection/manual-mode commands and UI-only notifications; **model-driven
+compression is unavailable** because a safe blocking authorization path has not
+been verified. Live host/terminal compatibility is still unverified.
+
+Read the [behavior and version differences](docs/compatibility.md) before switching
+hosts. The compression sections below describe the V1 adapter unless noted.
+
+For V2, add the plugin using the CLI:
 
 ```bash
-opencode plugin @tarquinen/opencode-dcp@latest --global
+opencode plugin add @tarquinen/opencode-dcp
 ```
 
 This installs the package and adds it to your global OpenCode config.
+
+For a local development checkout, build first (`npm ci && npm run build`) and
+configure an absolute plugin directory in your project:
+
+```jsonc
+{
+    "$schema": "https://opencode.ai/config.json",
+    "plugins": ["/absolute/path/to/opencode-dynamic-context-pruning-fork"],
+}
+```
+
+V1 uses the singular `plugin` array instead. Use a pinned package release rather
+than `latest` when intentionally keeping a legacy installation. Local development
+and published-package loading must be tested separately; changes in this fork are
+not automatically present in the upstream npm release.
 
 ## Project Status
 
@@ -55,6 +79,11 @@ Prunes inputs from errored tool calls after a configurable number of turns (defa
 
 DCP uses its own config file, searched in order:
 
+V2 retains these configuration layers without creating a default file on startup.
+Compression settings/custom prompts remain accepted but inactive on V2;
+`autoUpdate` is V1-only, and V2 `chat` notifications use the UI-only fallback.
+See [configuration differences](docs/compatibility.md#notification-behavior-and-configuration).
+
 1. Global: `~/.config/opencode/dcp.jsonc` (or `dcp.json`), created automatically on first run
 2. Custom config directory: `$OPENCODE_CONFIG_DIR/dcp.jsonc` (or `dcp.json`), if `OPENCODE_CONFIG_DIR` is set
 3. Project: `.opencode/dcp.jsonc` (or `dcp.json`) in your project's `.opencode` directory
@@ -77,6 +106,7 @@ Each level overrides the previous, so project settings take priority over global
     "enabled": true,
     // Automatically update npm-installed DCP when a newer npm latest is available.
     // Version-locked plugin specs are not updated.
+    // V1 only; on V2 use the host's plugin update command.
     "autoUpdate": true,
     // Enable debug logging to ~/.config/opencode/logs/dcp/
     "debug": false,
@@ -109,6 +139,7 @@ Each level overrides the previous, so project settings take priority over global
         "allowSubAgents": false,
         // Enable user-editable prompt overrides under dcp-prompts directories
         // When false (default), prompt override files/directories are ignored
+        // Applies to the V1 adapter; the restricted V2 adapter injects no compression prompts
         "customPrompts": false,
     },
     // Protect file operations from pruning via glob patterns
@@ -187,10 +218,16 @@ Each level overrides the previous, so project settings take priority over global
 
 ### Commands
 
-DCP provides a TUI panel and one prompt-producing slash command:
+On OpenCode V1, DCP provides a TUI panel and one prompt-producing slash command:
 
 - `/dcp` — Opens the DCP panel with context, stats, and manual-mode controls.
 - `/dcp-compress [focus]` — Asks the model to run one compression pass. Optional focus text directs what content to compress, following the active `compress.mode`.
+
+On OpenCode V2 the adapter is restricted, so:
+
+- `/dcp` (no arguments) opens a status/help alert; `/dcp status|help|context|stats|manual [on|off]` runs inspection without a model call.
+- `/dcp-compress`, `compress`, `sweep`, `decompress`, and `recompress` report that the capability is unavailable. They never prompt the model and never change compression state.
+- Notifications are UI-only (toast plus the latest status report); nothing is inserted into the conversation.
 
 ### Prompt Overrides
 
@@ -203,7 +240,7 @@ DCP exposes six editable prompts:
 - `turn-nudge`
 - `iteration-nudge`
 
-This feature is disabled by default. Set `experimental.customPrompts` to `true` in your DCP config to activate it.
+This feature is disabled by default. Set `experimental.customPrompts` to `true` in your DCP config to activate it. Prompt overrides apply to the V1 adapter; the restricted V2 adapter does not inject compression prompts.
 
 When enabled, managed defaults are written to `~/.config/opencode/dcp-prompts/defaults/` as plain-text prompt files. A single `README.md` in that directory explains each prompt and how to create overrides.
 

@@ -4,6 +4,14 @@ import { homedir } from "os"
 import { parse } from "jsonc-parser/lib/esm/main.js"
 import type { PluginInput } from "@opencode-ai/plugin"
 
+/** Host-neutral config loading; V1 retains its delayed toast transport. */
+export interface ConfigContext {
+    directory?: string
+    client?: Pick<PluginInput["client"], "tui">
+    warn?: (title: string, message: string) => void
+    createDefault?: boolean
+}
+
 type Permission = "ask" | "allow" | "deny"
 type CompressMode = "range" | "message"
 
@@ -609,7 +617,7 @@ export function validateConfigTypes(config: Record<string, any>): ValidationErro
 }
 
 function showConfigWarnings(
-    ctx: PluginInput,
+    ctx: ConfigContext,
     configPath: string,
     configData: Record<string, any>,
     isProject: boolean,
@@ -639,18 +647,7 @@ function showConfigWarnings(
         }
     }
 
-    setTimeout(() => {
-        try {
-            ctx.client.tui.showToast({
-                body: {
-                    title: `DCP: ${configType} warning`,
-                    message: `${configPath}\n${messages.join("\n")}`,
-                    variant: "warning",
-                    duration: 7000,
-                },
-            })
-        } catch {}
-    }, 7000)
+    scheduleParseWarning(ctx, `DCP: ${configType} warning`, `${configPath}\n${messages.join("\n")}`)
 }
 
 const defaultConfig: PluginConfig = {
@@ -725,7 +722,7 @@ function findOpencodeDir(startDir: string): string | null {
     return null
 }
 
-function getConfigPaths(ctx?: PluginInput): {
+function getConfigPaths(ctx?: ConfigContext): {
     global: string | null
     configDir: string | null
     project: string | null
@@ -951,26 +948,32 @@ function mergeLayer(config: PluginConfig, data: Record<string, any>): PluginConf
     }
 }
 
-function scheduleParseWarning(ctx: PluginInput, title: string, message: string): void {
+function scheduleParseWarning(ctx: ConfigContext, title: string, message: string): void {
+    if (ctx.warn) {
+        ctx.warn(title, message)
+        return
+    }
     setTimeout(() => {
         try {
-            ctx.client.tui.showToast({
-                body: {
-                    title,
-                    message,
-                    variant: "warning",
-                    duration: 7000,
-                },
-            })
+            void ctx.client?.tui
+                .showToast({
+                    body: {
+                        title,
+                        message,
+                        variant: "warning",
+                        duration: 7000,
+                    },
+                })
+                .catch(() => {})
         } catch {}
     }, 7000)
 }
 
-export function getConfig(ctx: PluginInput): PluginConfig {
+export function getConfig(ctx: ConfigContext): PluginConfig {
     let config = deepCloneConfig(defaultConfig)
     const configPaths = getConfigPaths(ctx)
 
-    if (!configPaths.global) {
+    if (!configPaths.global && ctx.createDefault !== false) {
         createDefaultConfig()
     }
 

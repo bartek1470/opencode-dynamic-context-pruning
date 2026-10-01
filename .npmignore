@@ -10,7 +10,8 @@ bun.lock
 
 # Documentation
 ANALYSIS.md
-docs/
+docs/*
+!docs/compatibility.md
 notes/
 
 # Server source file (server runtime ships dist/)

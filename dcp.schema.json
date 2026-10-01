@@ -19,7 +19,7 @@
         "autoUpdate": {
             "type": "boolean",
             "default": true,
-            "description": "Automatically update npm-installed DCP when a newer npm latest version is available. Version-locked plugin specs are not updated."
+            "description": "Automatically update npm-installed DCP when a newer npm latest version is available. Version-locked plugin specs are not updated. V1 only: use the host's plugin update command on OpenCode V2."
         },
         "debug": {
             "type": "boolean",
@@ -36,11 +36,11 @@
             "type": "string",
             "enum": ["chat", "toast"],
             "default": "chat",
-            "description": "Where to display notifications (chat message or toast notification)"
+            "description": "Where to display notifications (chat message or toast notification). On OpenCode V2 both values use the UI-only fallback and are never added to model context. See docs/compatibility.md"
         },
         "commands": {
             "type": "object",
-            "description": "Configuration for DCP slash commands (/dcp)",
+            "description": "Configuration for DCP slash commands (/dcp). On OpenCode V2, /dcp supports status, help, context, stats and manual mode; compression commands report an unavailable capability",
             "additionalProperties": false,
             "properties": {
                 "enabled": {
@@ -138,13 +138,13 @@
                     "type": "string",
                     "enum": ["range", "message"],
                     "default": "range",
-                    "description": "Compression mode. 'range' compresses spans into block summaries, 'message' compresses individual raw messages."
+                    "description": "Compression mode. 'range' compresses spans into block summaries, 'message' compresses individual raw messages. V1 only; see docs/compatibility.md."
                 },
                 "permission": {
                     "type": "string",
                     "enum": ["ask", "allow", "deny"],
                     "default": "allow",
-                    "description": "Permission mode (deny disables the tool)"
+                    "description": "Permission mode (deny disables the tool). V1 only: on OpenCode V2 compression is unavailable because a safe blocking host-authorization path is not verified, so this value never enables it."
                 },
                 "showCompression": {
                     "type": "boolean",

@@ -42,7 +42,8 @@ notes/
 test-update.ts
 
 # Documentation (local development only)
-docs/
+docs/*
+!docs/compatibility.md
 SCHEMA_NOTES.md
 
 repomix-output.xml
